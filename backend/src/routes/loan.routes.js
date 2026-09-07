@@ -11,6 +11,7 @@ router.get('/mine/provided', auth, asyncHandler(c.providedLoans));
 router.get('/provided/:id', auth, asyncHandler(c.getProvidedLoan));
 router.post('/provided/:id/repay', auth, asyncHandler(c.repayLoan));
 router.post('/', auth, asyncHandler(c.createLoan));
+router.delete('/:id', auth, asyncHandler(c.cancelLoan));
 router.get('/:id/offers', auth, asyncHandler(c.getLoanOffers));
 router.post('/:id/offers', auth, asyncHandler(c.createOffer));
 router.patch('/offers/:offerId/accept', auth, asyncHandler(c.acceptOffer));

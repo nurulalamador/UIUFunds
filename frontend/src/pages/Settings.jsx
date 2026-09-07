@@ -48,6 +48,7 @@ export default function Settings() {
                 onChange={(e) =>
                   setForm({ ...form, current_password: e.target.value })
                 }
+                placeholder="Enter current password"
                 required
               />
             </label>
@@ -60,6 +61,7 @@ export default function Settings() {
                 onChange={(e) =>
                   setForm({ ...form, new_password: e.target.value })
                 }
+                placeholder="Enter new password"
                 required
               />
             </label>
@@ -70,6 +72,7 @@ export default function Settings() {
                 minLength="6"
                 value={form.confirm}
                 onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+                placeholder="Confirm new password"
                 required
               />
             </label>
@@ -84,17 +87,21 @@ export default function Settings() {
           <h2>Application Preferences</h2>
           <div className="settings-row">
             <div>
-              <strong>Email notifications</strong>
-              <span>Receive important account updates.</span>
+              <div className="settings-row-title">Dark theme</div>
+              <div className="settings-row-details">
+                Eye relaxing energy saving dark theme.
+              </div>
             </div>
-            <input type="checkbox" defaultChecked />
+            <input type="checkbox" />
           </div>
           <div className="settings-row">
             <div>
-              <strong>Compact dashboard</strong>
-              <span>Keep the current design spacing.</span>
+              <div className="settings-row-title">Email notifications</div>
+              <div className="settings-row-details">
+                Receive important account updates.
+              </div>
             </div>
-            <input type="checkbox" />
+            <input type="checkbox" defaultChecked />
           </div>
         </section>
       </div>

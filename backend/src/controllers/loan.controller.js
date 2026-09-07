@@ -64,10 +64,55 @@ async function myLoanRequests(req, res) {
   const [rows] = await pool.execute(
     `SELECT l.*,
             (SELECT COUNT(*) FROM loan_offers lo WHERE lo.loan_id = l.id AND lo.status = 'pending') AS pending_offer_count
-     FROM loans l WHERE requester_id = ? ORDER BY created_at DESC`,
+     FROM loans l WHERE requester_id = ? AND status != "cancelled" ORDER BY created_at DESC`,
     [req.user.id]
   );
   res.json({ loans: rows });
+}
+
+async function cancelLoan(req, res) {
+  const loanId = Number(req.params.id);
+  if (!Number.isInteger(loanId) || loanId <= 0) {
+    return res.status(400).json({ message: 'Invalid loan id' });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [loans] = await conn.execute(
+      'SELECT id, requester_id, status FROM loans WHERE id = ? FOR UPDATE',
+      [loanId]
+    );
+    if (!loans.length) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'Loan request not found' });
+    }
+
+    const loan = loans[0];
+    if (loan.requester_id !== req.user.id) {
+      await conn.rollback();
+      return res.status(403).json({ message: 'Only the requester can remove this loan request' });
+    }
+    if (loan.status !== 'open') {
+      await conn.rollback();
+      return res.status(400).json({ message: 'Only an open loan request can be removed' });
+    }
+
+    await conn.execute(
+      "UPDATE loan_offers SET status = 'withdrawn' WHERE loan_id = ? AND status = 'pending'",
+      [loanId]
+    );
+    await conn.execute("UPDATE loans SET status = 'cancelled' WHERE id = ?", [loanId]);
+
+    await conn.commit();
+    res.json({ message: 'Loan request removed' });
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
+  }
 }
 
 async function createOffer(req, res) {
@@ -409,7 +454,7 @@ async function repayLoan(req, res) {
 }
 
 module.exports = {
-  createLoan, listLoans, getLoan, myLoanRequests,
+  createLoan, listLoans, getLoan, myLoanRequests, cancelLoan,
   createOffer, getLoanOffers, myOffers, acceptOffer,
   borrowedLoans, providedLoans, getProvidedLoan, repayLoan,
 };

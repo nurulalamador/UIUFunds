@@ -16,7 +16,6 @@ export default function Landing() {
             <Link className="button outline-light" to="/login">Sign In</Link>
           </div>
         </div>
-        <div className="hero-campus" aria-hidden="true" />
       </section>
 
       <section className="public-section" id="services">

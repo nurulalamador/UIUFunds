@@ -44,8 +44,8 @@ export default function Notifications() {
   if (loading) return <LoadingBlock text="Loading notifications..." />;
   return (
     <div className="content-container">
-      <div className="page-title-row">
-        <button className="button muted" onClick={all}>
+      <div className="notification-head">
+        <button className="button primary" onClick={all}>
           <CheckCheck size={16} />
           Mark all read
         </button>
@@ -63,9 +63,9 @@ export default function Notifications() {
                 <Bell size={18} />
               </span>
               <div>
-                <strong>{n.title}</strong>
-                <p>{n.description}</p>
-                <small>{timeAgo(n.created_at)}</small>
+                <div className="notification-row-title">{n.title}</div>
+                <div className="notification-row-details">{n.description}</div>
+                <div className="notification-row-time">{timeAgo(n.created_at)}</div>
               </div>
               {!n.is_read && <i />}
             </button>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { ArrowRight, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { Alert, EmptyState, LoadingBlock } from "../components/UI";
@@ -21,8 +21,10 @@ export default function ProvidedLoans() {
       <Alert>{error}</Alert>
       <div className="toolbar">
         <div className="filter-row">
-          <SlidersHorizontal size={17} />
-          <span>Filter</span>
+          <div className="filter-row-title">
+            <SlidersHorizontal size={18} />
+            <span>Filter</span>
+          </div>
           <select>
             <option>Time Remaining</option>
           </select>
@@ -33,17 +35,19 @@ export default function ProvidedLoans() {
           {loans.map((l) => (
             <article className="provided-card" key={l.id}>
               <div className="provided-head">
-                <div className="loan-user">
+                <div className="user">
                   <img src="/assets/avatar.jpg" alt="" />
-                  <div>
-                    <span>Provided To</span>
-                    <strong>{l.borrower_name}</strong>
-                    <small>View Profile →</small>
+                  <div className="user-details">
+                    <div className="user-name">{l.borrower_name}</div>
+                    <Link className="user-profile" to={`/app/profile/${l.borrower_id}`}>
+                      View Profile
+                      <ArrowRight size={14} />
+                    </Link>
                   </div>
                 </div>
                 <div className="provided-total">
-                  <small>Total Amount</small>
-                  <strong>{money(l.principal_amount)}</strong>
+                  <div className="provided-total-title">Total Amount</div>
+                  <div className="provided-total-amount">{money(l.principal_amount)}</div>
                 </div>
               </div>
               <div className="loan-info-grid">
@@ -57,12 +61,15 @@ export default function ProvidedLoans() {
                 <b>{l.interest_rate}%</b>
               </div>
               <div className="provided-progress">
-                <strong>
+                <div className="provided-progress-amount">
                   {l.completed_installments}/{l.total_installments}
-                </strong>
-                <span>Installment Completed</span>
+                </div>
+                <div>Installment Completed</div>
+              </div>
+
+              <div className="loan-info-grid border">
+                <span>Total Due (with interest)</span>
                 <b>
-                  Total Due (with interest){" "}
                   {money(
                     Math.max(
                       0,

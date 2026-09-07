@@ -5,6 +5,7 @@ import Modal from "../components/Modal";
 import { Alert, LoadingBlock, StatCard } from "../components/UI";
 import { useAuth } from "../contexts/AuthContext";
 import { money } from "../utils/format";
+import { API_URL } from "../config";
 
 export default function Profile() {
   const { user, updateUser } = useAuth();
@@ -90,13 +91,13 @@ export default function Profile() {
       <section className="profile-hero">
         <img src="/assets/avatar.jpg" alt="" />
         <div className="profile-info">
-          <h2>{profile.name}</h2>
-          <p>@{profile.username}</p>
-          <div>
+          <div className="profile-name">{profile.name}</div>
+          <div className="profile-username">@{profile.username}</div>
+          <div className="profile-verify-container">
             <span className="verified-tag">
-              ✓ {profile.is_verified ? "UIU Verified" : "Not Verified"}
+              {profile.is_verified ? "UIU Verified" : "Not Verified"}
             </span>
-            <span>UIU ID: {profile.id}</span>
+            <span><b>UIU ID:</b> {profile.uiuid || "0112230170"}</span>
           </div>
         </div>
         <button
@@ -116,20 +117,20 @@ export default function Profile() {
         <StatCard label="Total Loan Provided" value={money(stats.provided)} />
         <StatCard label="Overall Points" value={`★ ${points}`} />
       </div>
-      <section className="profile-contrib">
-        <h2>Contributions and Donations</h2>
+      <section className="profile-contribution">
+        <div className="profile-contribution-title">Contributions and Donations</div>
         <div className="profile-campaign-grid">
           {campaigns.slice(0, 2).map((c, i) => (
-            <article key={c.id}>
+            <div className="profile-campaign-box" key={c.id}>
               <img
-                src={i % 2 ? "/assets/cancer.jpg" : "/assets/flood.jpg"}
+                src={API_URL+c.image_url}
                 alt=""
               />
-              <div>
-                <strong>{c.name}</strong>
-                <span>{money(c.raised_amount)} raised</span>
+              <div className="profile-campaign-body">
+                <div className="profile-campaign-title">{c.name}</div>
+                <div className="profile-campaign-amount"><span>{money(c.raised_amount)}</span> Raised</div>
               </div>
-            </article>
+            </div>
           ))}
         </div>
       </section>
@@ -160,7 +161,7 @@ export default function Profile() {
           <Alert>{error}</Alert>
           <Alert type="success">{success}</Alert>
           <button className="button primary full" disabled={busy}>
-            {busy ? "Saving..." : "Save Changes"}
+            {busy ? "Saving..." : "Update Profile"}
           </button>
         </form>
       </Modal>

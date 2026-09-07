@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
 import { LayoutGrid, List, SlidersHorizontal } from "lucide-react";
 import { api, jsonBody } from "../api/client";
+import { API_URL } from "../config";
 import Modal from "../components/Modal";
 import { Alert, EmptyState, LoadingBlock } from "../components/UI";
 import { money, pct } from "../utils/format";
 import { useAuth } from "../contexts/AuthContext";
-
-function campaignImage(c, i) {
-  const n = (c?.name || "").toLowerCase();
-  if (n.includes("cancer")) return "/assets/cancer.jpg";
-  if (n.includes("winter")) return "/assets/winter.jpg";
-  return i % 2 ? "/assets/cancer.jpg" : "/assets/flood.jpg";
-}
 
 export default function Crowdfundings() {
   const { refreshUser } = useAuth();
@@ -22,6 +16,7 @@ export default function Crowdfundings() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
   const load = () =>
     api("/crowdfundings")
       .then((d) => setCampaigns(d.crowdfundings || []))
@@ -60,8 +55,10 @@ export default function Crowdfundings() {
       <Alert>{error && !selected ? error : ""}</Alert>
       <div className="toolbar">
         <div className="filter-row">
-          <SlidersHorizontal size={17} />
-          <span>Filter</span>
+          <div className="filter-row-title">
+            <SlidersHorizontal size={18} />
+            <span>Filter</span>
+          </div>
           <select>
             <option>Recently Posted</option>
           </select>
@@ -78,11 +75,11 @@ export default function Crowdfundings() {
       {campaigns.length ? (
         <div className="campaign-list grid">
           {campaigns.map((c, i) => (
-            <article className="campaign-card" key={c.id}>
-              <img src={campaignImage(c, i)} alt="" />
+            <div className="campaign-card" key={c.id}>
+              <img src={`${API_URL}${c.image_url}`} alt={c.name} />
               <div className="campaign-body">
                 <div className="campaign-title-row">
-                  <h3>{c.name}</h3>
+                  <div className="campaign-title">{c.name}</div>
                   <button
                     className="button primary small"
                     onClick={() => {
@@ -96,17 +93,21 @@ export default function Crowdfundings() {
                 </div>
                 <p>{c.description}</p>
                 <div className="campaign-meta">
-                  <span>Maintaining By</span>
-                  <strong>{c.poster_name}</strong>
+                  <div className="compaign-meta-label">Maintaining By</div>
+                  <div className="compaign-meta-info">{c.poster_name}</div>
                 </div>
                 <div className="fund-row">
                   <div>
-                    <small>Donation Received</small>
-                    <b>{money(c.raised_amount)}</b>
+                    <div className="fund-row-label">Donation Received</div>
+                    <div className="fund-row-amount">
+                      {money(c.raised_amount)}
+                    </div>
                   </div>
                   <div className="right">
-                    <small>Fund Goal</small>
-                    <b>{money(c.target_amount)}</b>
+                    <div className="fund-row-label">Fund Goal</div>
+                    <div className="fund-row-amount">
+                      {money(c.target_amount)}
+                    </div>
                   </div>
                 </div>
                 <div className="progress">
@@ -117,7 +118,7 @@ export default function Crowdfundings() {
                   />
                 </div>
               </div>
-            </article>
+            </div>
           ))}
         </div>
       ) : (
@@ -133,10 +134,7 @@ export default function Crowdfundings() {
       >
         <form className="modal-form" onSubmit={donate}>
           <div className="donation-summary">
-            <img
-              src={selected ? campaignImage(selected, 0) : "/assets/flood.jpg"}
-              alt=""
-            />
+            <img src={selected ? `${API_URL}${selected?.image_url}` : ""} alt={selected?.name || ""} />
             <div>
               <strong>{selected?.name}</strong>
               <span>

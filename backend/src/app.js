@@ -9,6 +9,7 @@ const crowdfundingRoutes = require('./routes/crowdfunding.routes');
 const transactionRoutes = require('./routes/transaction.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const communityRoutes = require('./routes/community.routes');
+const messageRoutes = require('./routes/message.routes');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/crowdfundings', crowdfundingRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/community', communityRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

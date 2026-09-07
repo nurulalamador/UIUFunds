@@ -64,8 +64,10 @@ export default function Transactions() {
         </button>
         <div className="toolbar-right">
           <div className="filter-row">
-            <SlidersHorizontal size={17} />
-            <span>Filter</span>
+            <div className="filter-row-title">
+              <SlidersHorizontal size={17} />
+              <span>Filter</span>
+            </div>
             <select>
               <option>Recently Posted</option>
             </select>
@@ -85,16 +87,16 @@ export default function Transactions() {
           {items.map((t) => (
             <div className="transaction-row" key={t.id}>
               <div>
-                <h3>{t.title}</h3>
-                <span>
+                <div className="transaction-row-title">{t.title}</div>
+                <div className="transaction-row-message">
                   {shortDate(t.created_at)} •{" "}
                   {String(t.transaction_type || "").replaceAll("_", " ")}
-                </span>
+                </div>
               </div>
-              <strong className={t.direction === "credit" ? "credit" : "debit"}>
+              <div className={`transaction-row-amount ${t.direction === "credit" ? "credit" : "debit"}`}>
                 {t.direction === "credit" ? "+" : "-"}
                 {money(t.amount)}
-              </strong>
+              </div>
             </div>
           ))}
         </div>
@@ -104,16 +106,17 @@ export default function Transactions() {
           text="Wallet activity, loans and crowdfunding transactions will appear here."
         />
       )}
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title="Add Balance for Local Testing"
-      >
+      <Modal open={open} onClose={() => setOpen(false)} title="Add Balance">
         <form className="modal-form" onSubmit={topup}>
-          <p className="field-help">
-            This uses the backend demo top-up endpoint. Keep
-            ENABLE_DEMO_TOPUP=true only for local development.
-          </p>
+          <label>
+            Payment Method
+            <div className="radio-container">
+              <input type="radio" name="payment-method" checked /> bKash
+            </div>
+            <div className="radio-container">
+              <input type="radio" name="payment-method" /> SSLecomerz
+            </div>
+          </label>
           <label>
             Amount
             <input
@@ -123,6 +126,7 @@ export default function Transactions() {
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter amount"
               required
             />
           </label>

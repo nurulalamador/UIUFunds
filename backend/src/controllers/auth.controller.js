@@ -95,6 +95,7 @@ async function login(req, res) {
       name: user.name,
       username: user.username,
       email: user.email,
+      uiuid: user.uiuid,
       balance: user.balance,
       is_verified: Boolean(user.is_verified),
       role: user.role,

@@ -2,18 +2,30 @@ const pool = require('../config/db');
 const { addTransaction } = require('../utils/transactions');
 const { createNotification } = require('../utils/notifications');
 
+function imageMimeType(buffer) {
+  if (buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return 'image/png';
+  if (buffer.subarray(0, 3).equals(Buffer.from([255, 216, 255]))) return 'image/jpeg';
+  if (buffer.subarray(0, 6).toString() === 'GIF87a' || buffer.subarray(0, 6).toString() === 'GIF89a') return 'image/gif';
+  if (buffer.subarray(0, 4).toString() === 'RIFF' && buffer.subarray(8, 12).toString() === 'WEBP') return 'image/webp';
+  return 'application/octet-stream';
+}
+
 async function createCrowdfunding(req, res) {
   const { name, description, target_amount } = req.body;
   const target = Number(target_amount);
+  const image = req.file;
 
   if (!name || !description || !Number.isFinite(target) || target <= 0) {
     return res.status(400).json({ message: 'name, description and a valid target_amount are required' });
   }
+  if (!image || !image.mimetype.startsWith('image/')) {
+    return res.status(400).json({ message: 'A valid campaign image is required' });
+  }
 
   const [result] = await pool.execute(
-    `INSERT INTO crowdfundings (posted_by, name, description, target_amount)
-     VALUES (?, ?, ?, ?)`,
-    [req.user.id, name.trim(), description.trim(), target]
+    `INSERT INTO crowdfundings (posted_by, name, description, image_blob, target_amount)
+     VALUES (?, ?, ?, ?, ?)`,
+    [req.user.id, name.trim(), description.trim(), image.buffer, target]
   );
 
   res.status(201).json({ message: 'Crowdfunding submitted for admin approval', crowdfunding_id: result.insertId });
@@ -21,11 +33,17 @@ async function createCrowdfunding(req, res) {
 
 async function listCrowdfundings(req, res) {
   const [rows] = await pool.execute(
-    `SELECT c.*, u.name AS poster_name, u.username AS poster_username, u.is_verified AS poster_verified,
-            (SELECT COUNT(*) FROM crowdfunding_donations d WHERE d.crowdfunding_id = c.id) AS donation_count
+    `SELECT c.id, c.posted_by, c.name, c.description, c.target_amount, c.raised_amount,
+            c.approval_status, c.is_approved, c.status, c.created_at, c.updated_at,
+            CASE WHEN c.image_blob IS NOT NULL THEN TRUE ELSE FALSE END AS has_image,
+            u.name AS poster_name, u.username AS poster_username, u.is_verified AS poster_verified,
+            (SELECT COUNT(*) FROM crowdfunding_donations d WHERE d.crowdfunding_id = c.id) AS donation_count,
+            CASE WHEN c.image_blob IS NOT NULL
+                THEN CONCAT('/crowdfundings/', c.id, '/image')
+                ELSE NULL END AS image_url
      FROM crowdfundings c
      JOIN users u ON u.id = c.posted_by
-     WHERE c.approval_status = 'approved' AND c.is_approved = TRUE
+     WHERE c.approval_status = 'approved' AND c.is_approved = TRUE AND c.status = "active"
      ORDER BY c.created_at DESC`
   );
   res.json({ crowdfundings: rows });
@@ -33,7 +51,13 @@ async function listCrowdfundings(req, res) {
 
 async function getCrowdfunding(req, res) {
   const [rows] = await pool.execute(
-    `SELECT c.*, u.name AS poster_name, u.username AS poster_username
+    `SELECT c.id, c.posted_by, c.name, c.description, c.target_amount, c.raised_amount,
+            c.approval_status, c.is_approved, c.status, c.created_at, c.updated_at,
+            CASE WHEN c.image_blob IS NOT NULL THEN TRUE ELSE FALSE END AS has_image,
+            CASE WHEN c.image_blob IS NOT NULL
+                THEN CONCAT('/crowdfundings/', c.id, '/image')
+                ELSE NULL END AS image_url,
+            u.name AS poster_name, u.username AS poster_username
      FROM crowdfundings c JOIN users u ON u.id = c.posted_by
      WHERE c.id = ? LIMIT 1`,
     [req.params.id]
@@ -54,7 +78,7 @@ async function getCrowdfunding(req, res) {
 
   const [spendItems] = await pool.execute(
     `SELECT id, crowdfunding_id, name, description, price_per_unit, quantity, total_amount,
-            proof_type, proof_mime_type, proof_file_name, spent_at, created_at, updated_at,
+            proof_type, spent_at, created_at, updated_at,
             CASE WHEN proof_blob IS NULL THEN FALSE ELSE TRUE END AS has_proof
      FROM crowdfunding_spend_items WHERE crowdfunding_id = ? ORDER BY spent_at DESC`,
     [campaign.id]
@@ -63,14 +87,41 @@ async function getCrowdfunding(req, res) {
   res.json({ crowdfunding: campaign, donations, spend_items: spendItems });
 }
 
+async function getCrowdfundingImage(req, res) {
+  const [rows] = await pool.execute(
+    `SELECT image_blob FROM crowdfundings
+     WHERE id = ?
+     LIMIT 1`,
+    [req.params.id]
+  );
+  if (!rows.length || !rows[0].image_blob) {
+    return res.status(404).json({ message: 'Crowdfunding image not found' });
+  }
+
+  res.setHeader('Content-Type', imageMimeType(rows[0].image_blob));
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(rows[0].image_blob);
+}
+
 async function myCrowdfundings(req, res) {
-  const [rows] = await pool.execute('SELECT * FROM crowdfundings WHERE posted_by = ? ORDER BY created_at DESC', [req.user.id]);
+  const [rows] = await pool.execute(
+    `SELECT id, posted_by, name, description, target_amount, raised_amount,
+        approval_status, is_approved, status, created_at, updated_at,
+        CASE WHEN image_blob IS NOT NULL THEN TRUE ELSE FALSE END AS has_image,
+        CASE WHEN image_blob IS NOT NULL
+          THEN CONCAT('/crowdfundings/', id, '/image')
+          ELSE NULL END AS image_url
+     FROM crowdfundings WHERE posted_by = ? ORDER BY created_at DESC`,
+    [req.user.id]
+  );
   res.json({ crowdfundings: rows });
 }
 
 async function pendingCrowdfundings(req, res) {
   const [rows] = await pool.execute(
-    `SELECT c.*, u.name AS poster_name, u.username AS poster_username
+    `SELECT c.id, c.posted_by, c.name, c.description, c.target_amount, c.raised_amount,
+            c.approval_status, c.is_approved, c.status, c.created_at, c.updated_at,
+            u.name AS poster_name, u.username AS poster_username
      FROM crowdfundings c JOIN users u ON u.id = c.posted_by
      WHERE c.approval_status = 'pending' ORDER BY c.created_at ASC`
   );
@@ -259,8 +310,46 @@ async function getSpendProof(req, res) {
   res.send(rows[0].proof_blob);
 }
 
+
+async function listCrowdfundings(req, res) {
+  const [rows] = await pool.execute(
+    `SELECT c.id, c.posted_by, c.name, c.description, c.target_amount, c.raised_amount,
+            c.approval_status, c.is_approved, c.status, c.created_at, c.updated_at,
+            CASE WHEN c.image_blob IS NOT NULL THEN TRUE ELSE FALSE END AS has_image,
+            u.name AS poster_name, u.username AS poster_username, u.is_verified AS poster_verified,
+            (SELECT COUNT(*) FROM crowdfunding_donations d WHERE d.crowdfunding_id = c.id) AS donation_count,
+            CASE WHEN c.image_blob IS NOT NULL
+                THEN CONCAT('/crowdfundings/', c.id, '/image')
+                ELSE NULL END AS image_url
+     FROM crowdfundings c
+     JOIN users u ON u.id = c.posted_by
+     WHERE c.approval_status = 'approved' AND c.is_approved = TRUE AND c.status = "active"
+     ORDER BY c.created_at DESC`
+  );
+  res.json({ crowdfundings: rows });
+}
+
+async function listCompletedCrowdfundings(req, res) {
+  const [rows] = await pool.execute(
+    `SELECT c.id, c.posted_by, c.name, c.description, c.target_amount, c.raised_amount,
+            c.approval_status, c.is_approved, c.status, c.created_at, c.updated_at,
+            CASE WHEN c.image_blob IS NOT NULL THEN TRUE ELSE FALSE END AS has_image,
+            u.name AS poster_name, u.username AS poster_username, u.is_verified AS poster_verified,
+            (SELECT COUNT(*) FROM crowdfunding_donations d WHERE d.crowdfunding_id = c.id) AS donation_count,
+            CASE WHEN c.image_blob IS NOT NULL
+                THEN CONCAT('/crowdfundings/', c.id, '/image')
+                ELSE NULL END AS image_url
+     FROM crowdfundings c
+     JOIN users u ON u.id = c.posted_by
+     WHERE c.approval_status = 'approved' AND c.is_approved = TRUE AND c.status = 'completed'
+     ORDER BY c.created_at DESC`
+  );
+  res.json({ crowdfundings: rows });
+}
+
 module.exports = {
-  createCrowdfunding, listCrowdfundings, getCrowdfunding, myCrowdfundings,
+  createCrowdfunding, listCrowdfundings, listCompletedCrowdfundings, getCrowdfunding, myCrowdfundings,
+  getCrowdfundingImage,
   pendingCrowdfundings, approveCrowdfunding, rejectCrowdfunding,
   donate, addSpendItem, getSpendProof,
 };

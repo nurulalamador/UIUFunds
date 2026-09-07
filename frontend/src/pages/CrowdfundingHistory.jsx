@@ -2,30 +2,17 @@ import { useEffect, useState } from "react";
 import { LayoutGrid, List, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
+import { API_URL } from "../config";
 import { Alert, EmptyState, LoadingBlock } from "../components/UI";
 import { money, pct } from "../utils/format";
 
-function historyImage(c, i) {
-  const n = (c?.name || "").toLowerCase();
-  if (n.includes("winter")) return "/assets/winter.jpg";
-  if (n.includes("cancer")) return "/assets/cancer.jpg";
-  return i % 2 ? "/assets/winter.jpg" : "/assets/history-flood.jpg";
-}
 export default function CrowdfundingHistory() {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   useEffect(() => {
-    api("/crowdfundings")
-      .then((d) =>
-        setCampaigns(
-          (d.crowdfundings || []).filter(
-            (c) =>
-              c.status === "completed" ||
-              Number(c.raised_amount) >= Number(c.target_amount),
-          ),
-        ),
-      )
+    api("/crowdfundings/history")
+      .then((d) => setCampaigns(d.crowdfundings || []))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -35,8 +22,10 @@ export default function CrowdfundingHistory() {
       <Alert>{error}</Alert>
       <div className="toolbar">
         <div className="filter-row">
-          <SlidersHorizontal size={17} />
-          <span>Filter</span>
+          <div className="filter-row-title">
+            <SlidersHorizontal size={18} />
+            <span>Filter</span>
+          </div>
           <select>
             <option>Recently Posted</option>
           </select>
@@ -53,23 +42,29 @@ export default function CrowdfundingHistory() {
       {campaigns.length ? (
         <div className="campaign-list grid">
           {campaigns.map((c, i) => (
-            <article className="campaign-card" key={c.id}>
-              <img src={historyImage(c, i)} alt="" />
+            <div className="campaign-card" key={c.id}>
+              <img src={`${API_URL}${c.image_url}`} alt={c.name} />
               <div className="campaign-body">
-                <h3>{c.name}</h3>
+                <div className="campaign-title-row">
+                  <div className="campaign-title">{c.name}</div>
+                </div>
                 <p>{c.description}</p>
                 <div className="campaign-meta">
-                  <span>Maintaining By</span>
-                  <strong>{c.poster_name}</strong>
+                  <div className="compaign-meta-label">Maintaining By</div>
+                  <div className="compaign-meta-info">{c.poster_name}</div>
                 </div>
                 <div className="fund-row">
                   <div>
-                    <small>Donation Received</small>
-                    <b>{money(c.raised_amount)}</b>
+                    <div className="fund-row-label">Donation Received</div>
+                    <div className="fund-row-amount">
+                      {money(c.raised_amount)}
+                    </div>
                   </div>
                   <div className="right">
-                    <small>Fund Goal</small>
-                    <b>{money(c.target_amount)}</b>
+                    <div className="fund-row-label">Fund Goal</div>
+                    <div className="fund-row-amount">
+                      {money(c.target_amount)}
+                    </div>
                   </div>
                 </div>
                 <div className="progress">
@@ -86,7 +81,7 @@ export default function CrowdfundingHistory() {
                   View Spent History
                 </Link>
               </div>
-            </article>
+            </div>
           ))}
         </div>
       ) : (

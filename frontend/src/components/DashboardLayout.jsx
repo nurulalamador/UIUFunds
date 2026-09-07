@@ -40,9 +40,6 @@ function SideItem({ to, icon: Icon, children, end = false, onClick }) {
 }
 
 function getPageTitle(pathname) {
-  if (pathname.includes("/manage-spent")) return "Manage Spent";
-  if (pathname.includes("/spent")) return "Spent History";
-
   const pageTitles = [
     ["/app", "Dashboard"],
     ["/app/community", "Community Feed"],
@@ -50,8 +47,7 @@ function getPageTitle(pathname) {
     ["/app/my-loans", "My Loans"],
     ["/app/provided-loans/", "Provided Loan Details"],
     ["/app/provided-loans", "Provided Loans"],
-    ["/app/crowdfundings/new", "New Crowdfunding"],
-    ["/app/crowdfundings/history", "Crowdfundings History"],
+    ["/app/crowdfundings-history", "Crowdfundings History"],
     ["/app/crowdfundings/", "Manage Crowdfunding"],
     ["/app/crowdfundings", "Current Crowdfundings"],
     ["/app/my-crowdfundings", "My Crowdfundings"],
@@ -173,7 +169,7 @@ export default function DashboardLayout() {
                 My Crowdfundings
               </SideItem>
               <SideItem
-                to="/app/crowdfundings/history"
+                to="/app/crowdfundings-history"
                 icon={Gauge}
                 onClick={closeMobile}
               >
@@ -247,7 +243,7 @@ export default function DashboardLayout() {
                 <button
                   onClick={() => {
                     setAccountMenuOpen(false);
-                    navigate("/app/profile");
+                    navigate(`/app/profile/${user?.id}`);
                   }}
                 >
                   <UserRound size={16} />

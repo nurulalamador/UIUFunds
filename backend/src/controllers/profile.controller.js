@@ -62,14 +62,56 @@ async function changePassword(req, res) {
 }
 
 async function getPublicProfile(req, res) {
+  console.log("id:", req.params.id)
   const [rows] = await pool.execute(
     `SELECT id, name, username, is_verified, role, created_at
-     FROM users WHERE username = ? LIMIT 1`,
-    [req.params.username.toLowerCase()]
+     FROM users WHERE id = ? LIMIT 1`,
+    [req.params.id]
   );
 
   if (!rows.length) return res.status(404).json({ message: 'User not found' });
-  res.json({ user: rows[0] });
+
+  const user = rows[0];
+  const [[donationTotal]] = await pool.execute(
+    `SELECT COALESCE(SUM(amount), 0) AS total
+     FROM crowdfunding_donations WHERE donor_id = ?`,
+    [user.id]
+  );
+  const [[receivedTotal]] = await pool.execute(
+    `SELECT COALESCE(SUM(principal_amount), 0) AS total
+     FROM provided_loans WHERE borrower_id = ?`,
+    [user.id]
+  );
+  const [[providedTotal]] = await pool.execute(
+    `SELECT COALESCE(SUM(principal_amount), 0) AS total
+     FROM provided_loans WHERE provider_id = ?`,
+    [user.id]
+  );
+  const [campaigns] = await pool.execute(
+    `SELECT id, name, target_amount, raised_amount,
+            CASE WHEN image_blob IS NOT NULL
+              THEN CONCAT('/crowdfundings/', id, '/image')
+              ELSE NULL END AS image_url
+     FROM crowdfundings
+     WHERE posted_by = ? AND approval_status = 'approved'
+       AND is_approved = TRUE AND status = 'active'
+     ORDER BY created_at DESC
+     LIMIT 6`,
+    [user.id]
+  );
+
+  const stats = {
+    donations: Number(donationTotal.total || 0),
+    received: Number(receivedTotal.total || 0),
+    provided: Number(providedTotal.total || 0),
+  };
+
+  res.json({
+    user,
+    stats,
+    points: Math.round((stats.donations + stats.provided) / 200),
+    campaigns,
+  });
 }
 
 module.exports = { getProfile, updateProfile, changePassword, getPublicProfile };

@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { LayoutGrid, List, Plus, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowRight,
+  LayoutGrid,
+  List,
+  Plus,
+  SlidersHorizontal,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import {
@@ -16,6 +22,7 @@ export default function MyLoans() {
   const [borrowed, setBorrowed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [removingId, setRemovingId] = useState(null);
   useEffect(() => {
     Promise.allSettled([
       api("/loans/mine/requests"),
@@ -49,6 +56,26 @@ export default function MyLoans() {
     }),
     [requests, borrowed],
   );
+  const removeRequest = async (loanId) => {
+    if (
+      !window.confirm(
+        "Remove this loan request? Any pending offers will be withdrawn.",
+      )
+    ) {
+      return;
+    }
+
+    setRemovingId(loanId);
+    setError("");
+    try {
+      await api(`/loans/${loanId}`, { method: "DELETE" });
+      setRequests((current) => current.filter((loan) => loan.id !== loanId));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setRemovingId(null);
+    }
+  };
   if (loading) return <LoadingBlock text="Loading your loans..." />;
   return (
     <div className="content-container">
@@ -93,19 +120,21 @@ export default function MyLoans() {
       {requests.length || borrowed.length ? (
         <div className="loan-grid two">
           {requests.map((l) => (
-            <article className="my-loan-card" key={`r-${l.id}`}>
+            <div className="my-loan-card" key={`r-${l.id}`}>
               <div className="card-top">
                 <Badge>
                   {Number(l.duration_months) <= 3 ? "Urgent" : "Normal"}
                 </Badge>
-                <div>
-                  <small>Duration</small>
-                  <b>{l.duration_months} Months</b>
+                <div className="card-top-details">
+                  <div className="card-top-details-title">Duration</div>
+                  <div className="card-top-details-count">
+                    {l.duration_months} Months
+                  </div>
                 </div>
               </div>
               <div className="loan-amount left">
-                <small>Amount Requested</small>
-                <strong>{money(l.amount)}</strong>
+                <div className="loan-amount-title">Amount Requested</div>
+                <div className="loan-amount-count">{money(l.amount)}</div>
               </div>
               <div className="loan-info-grid">
                 <span>Interest Allowed</span>
@@ -118,31 +147,42 @@ export default function MyLoans() {
                   Total Offer <b>{l.pending_offer_count || 0}</b>
                 </span>
                 {Number(l.pending_offer_count) > 0 && (
-                  <Link to={`/app/loans/${l.id}/offers`}>See All Offers →</Link>
+                  <Link to={`/app/loans/${l.id}/offers`}>
+                    See All Offers
+                    <ArrowRight size={14} />
+                  </Link>
                 )}
               </div>
               <div className="card-button-row">
-                <button className="button muted" disabled>
+                {/* <button className="button muted">
                   Edit Details
-                </button>
-                <button className="button danger-soft" disabled>
-                  Remove Loan Request
+                </button> */}
+                <button
+                  className="button danger-soft"
+                  onClick={() => removeRequest(l.id)}
+                  disabled={removingId === l.id}
+                >
+                  {removingId === l.id ? "Removing..." : "Remove Loan Request"}
                 </button>
               </div>
-            </article>
+            </div>
           ))}
           {borrowed.map((l) => (
-            <article className="my-loan-card" key={`b-${l.id}`}>
+            <div className="my-loan-card" key={`b-${l.id}`}>
               <div className="card-top">
                 <Badge>{l.status}</Badge>
-                <div>
-                  <small>Duration</small>
-                  <b>{l.total_installments} Payments</b>
+                <div className="card-top-details">
+                  <div className="card-top-details-title">Duration</div>
+                  <div className="card-top-details-count">
+                    {l.total_installments} Payments
+                  </div>
                 </div>
               </div>
               <div className="loan-amount left">
-                <small>Received Amount</small>
-                <strong>{money(l.principal_amount)}</strong>
+                <div className="loan-amount-title">Received Amount</div>
+                <div className="loan-amount-count">
+                  {money(l.principal_amount)}
+                </div>
               </div>
               <div className="loan-info-grid">
                 <span>Interest</span>
@@ -151,6 +191,8 @@ export default function MyLoans() {
                 <b>{l.total_installments} Installment</b>
                 <span>Provider</span>
                 <b>{l.provider_name}</b>
+              </div>
+              <div className="loan-info-grid border">
                 <span>Total Due</span>
                 <b>
                   {money(
@@ -182,7 +224,7 @@ export default function MyLoans() {
                   Return Money
                 </Link>
               </div>
-            </article>
+            </div>
           ))}
         </div>
       ) : (

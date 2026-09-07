@@ -22,6 +22,7 @@ import CrowdfundingHistory from './pages/CrowdfundingHistory'
 import SpentHistory from './pages/SpentHistory'
 import Transactions from './pages/Transactions'
 import Profile from './pages/Profile'
+import PublicProfile from './pages/PublicProfile'
 import Notifications from './pages/Notifications'
 import Settings from './pages/Settings'
 import Messages from './pages/Messages'
@@ -48,11 +49,12 @@ export default function App() {
           <Route path="provided-loans/:id" element={<ProvidedLoanDetails />} />
           <Route path="crowdfundings" element={<Crowdfundings />} />
           <Route path="crowdfundings/new" element={<NewCrowdfunding />} />
-          <Route path="crowdfundings/history" element={<CrowdfundingHistory />} />
+          <Route path="crowdfundings-history" element={<CrowdfundingHistory />} />
           <Route path="crowdfundings/:id/manage-spent" element={<ManageSpent />} />
           <Route path="crowdfundings/:id/spent" element={<SpentHistory />} />
           <Route path="my-crowdfundings" element={<MyCrowdfundings />} />
           <Route path="transactions" element={<Transactions />} />
+          <Route path="profile/:id" element={<PublicProfile />} />
           <Route path="profile" element={<Profile />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="messages" element={<Messages />} />

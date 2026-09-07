@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { LayoutGrid, List, SlidersHorizontal } from "lucide-react";
+import { Link } from "react-router-dom";
 import { api, jsonBody } from "../api/client";
 import Modal from "../components/Modal";
 import { Alert, Badge, EmptyState, LoadingBlock } from "../components/UI";
@@ -14,10 +15,10 @@ function LoanCard({ loan, onOffer, me }) {
         <img src="/assets/avatar.jpg" alt="" />
         <div className="user-details">
           <div className="user-name">{loan.requester_name}</div>
-          <div className="user-profile">
+          <Link className="user-profile" to={`/app/profile/${loan.requester_id}`}>
             View Profile
             <BiRightArrowAlt size={14} />
-          </div>
+          </Link>
         </div>
         <Badge tone={loan.priority == "urgent" ? "orange" : "soft"}>
           {loan.priority == "urgent" ? "Urgent" : "Normal"}
@@ -159,10 +160,13 @@ export default function LoanRequests() {
               <img src="/assets/avatar.jpg" alt="" />
               <div className="user-details">
                 <div className="user-name">{selected.requester_name}</div>
-                <div className="user-profile">
+                <Link
+                  className="user-profile"
+                  to={`/app/profile/${selected.requester_id}`}
+                >
                   View Profile
                   <BiRightArrowAlt size={14} />
-                </div>
+                </Link>
               </div>
               <Badge tone={selected.priority == "urgent" ? "orange" : "soft"}>
                 {selected.priority == "urgent" ? "Urgent" : "Normal"}

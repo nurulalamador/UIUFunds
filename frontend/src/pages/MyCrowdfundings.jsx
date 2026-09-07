@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LayoutGrid, List, Plus, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
+import { API_URL } from "../config";
 import {
   Alert,
   Badge,
@@ -11,11 +12,6 @@ import {
 } from "../components/UI";
 import { money, pct } from "../utils/format";
 
-function img(c) {
-  return (c?.name || "").toLowerCase().includes("cancer")
-    ? "/assets/cancer.jpg"
-    : "/assets/flood.jpg";
-}
 export default function MyCrowdfundings() {
   const [campaigns, setCampaigns] = useState([]);
   const [details, setDetails] = useState({});
@@ -74,8 +70,10 @@ export default function MyCrowdfundings() {
         </Link>
         <div className="toolbar-right">
           <div className="filter-row">
-            <SlidersHorizontal size={17} />
-            <span>Filter</span>
+            <div className="filter-row-title">
+              <SlidersHorizontal size={18} />
+              <span>Filter</span>
+            </div>
             <select>
               <option>Recently Posted</option>
             </select>
@@ -94,10 +92,10 @@ export default function MyCrowdfundings() {
         <div className="my-campaign-list">
           {campaigns.map((c) => (
             <article className="my-campaign" key={c.id}>
-              <img src={img(c)} alt="" />
-              <div className="my-campaign-body">
+              <img src={`${API_URL}${c.image_url}`} alt="" />
+              <div className="campaign-body">
                 <div className="campaign-title-row">
-                  <h3>{c.name}</h3>
+                  <div className="campaign-title">{c.name}</div>
                   <Badge
                     tone={
                       c.approval_status === "approved"
@@ -117,12 +115,16 @@ export default function MyCrowdfundings() {
                 </div>
                 <div className="fund-row">
                   <div>
-                    <small>Donation Received</small>
-                    <b>{money(c.raised_amount)}</b>
+                    <div className="fund-row-label">Donation Received</div>
+                    <div className="fund-row-amount">
+                      {money(c.raised_amount)}
+                    </div>
                   </div>
                   <div className="right">
-                    <small>Fund Goal</small>
-                    <b>{money(c.target_amount)}</b>
+                    <div className="fund-row-label">Fund Goal</div>
+                    <div className="fund-row-amount">
+                      {money(c.target_amount)}
+                    </div>
                   </div>
                 </div>
                 <div className="progress">
@@ -133,9 +135,7 @@ export default function MyCrowdfundings() {
                   />
                 </div>
                 <div className="card-button-row">
-                  <button className="button muted" disabled>
-                    Edit Details
-                  </button>
+                  <button className="button muted">Edit Details</button>
                   {c.approval_status === "approved" ? (
                     <Link
                       className="button primary-soft"
