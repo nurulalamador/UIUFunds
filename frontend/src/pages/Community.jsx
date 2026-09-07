@@ -9,6 +9,7 @@ import {
   ThumbsUp,
   MessageCircle,
   Share2,
+  Flag,
 } from "lucide-react";
 import { api } from "../api/client";
 import { Alert, EmptyState, LoadingBlock } from "../components/UI";
@@ -64,6 +65,15 @@ export default function Community() {
     try {
       await api(`/community/posts/${id}/react`, { method: "POST" });
       await load();
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const report = async (id) => {
+    try {
+      await api(`/community/posts/${id}/report`, { method: "POST" });
+      setError("Post reported to the admin team.");
     } catch (e) {
       setError(e.message);
     }
@@ -165,7 +175,7 @@ export default function Community() {
                       {p?.poster_verified ? "UIU Verified" : `Not verified`}
                     </div>
                   </div>
-                  <button className="icon-button plain" onClick={(e) => e.stopPropagation()}>•••</button>
+                  <button className="icon-button plain" title="Report post" onClick={(e) => { e.stopPropagation(); report(p.id); }}><Flag size={16} /></button>
                 </div>
                 <div className="post-content">{p.content}</div>
                 {media.length > 0 && (

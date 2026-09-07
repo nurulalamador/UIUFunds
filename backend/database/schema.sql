@@ -58,6 +58,8 @@ CREATE TABLE community_posts (
 );
 
 
+
+
 CREATE TABLE community_post_media (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
@@ -126,6 +128,28 @@ CREATE TABLE community_post_comments (
 
     INDEX idx_community_comments_post (post_id),
     INDEX idx_community_comments_user (commenter_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS reported_posts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT UNSIGNED NOT NULL,
+    reporter_id BIGINT UNSIGNED NOT NULL,
+    reported_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_reported_posts_post
+        FOREIGN KEY (post_id)
+        REFERENCES community_posts(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_reported_posts_reporter
+        FOREIGN KEY (reporter_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    UNIQUE KEY uq_reported_post_reporter (post_id, reporter_id),
+    INDEX idx_reported_posts_post (post_id),
+    INDEX idx_reported_posts_reported_at (reported_at)
 );
 
 

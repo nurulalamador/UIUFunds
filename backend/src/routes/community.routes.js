@@ -6,6 +6,7 @@ const c = require('../controllers/community.controller');
 
 router.get('/posts', auth, asyncHandler(c.listPosts));
 router.post('/posts', auth, upload.array('media', 4), asyncHandler(c.createPost));
+router.post('/posts/:id/report', auth, asyncHandler(c.reportPost));
 router.get('/media/:mediaId', asyncHandler(c.getMedia));
 router.post('/posts/:id/react', auth, asyncHandler(c.toggleReact));
 router.post('/posts/:id/comments', auth, asyncHandler(c.addComment));

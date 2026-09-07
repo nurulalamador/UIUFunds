@@ -6,6 +6,7 @@ import { API_URL } from "../config";
 import { EmptyState, LoadingBlock, StatCard } from "../components/UI";
 import { useAuth } from "../contexts/AuthContext";
 import { money, pct } from "../utils/format";
+import AdminDashboard from "./AdminDashboard";
 
 function campaignImage(c, index) {
   if (c?.image_url) return `${API_URL}${c.image_url}`;
@@ -17,6 +18,7 @@ function campaignImage(c, index) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  if (user?.role === "admin") return <AdminDashboard />;
   const [data, setData] = useState({
     transactions: [],
     loans: [],

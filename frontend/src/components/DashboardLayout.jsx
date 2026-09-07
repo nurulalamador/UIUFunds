@@ -57,6 +57,8 @@ function getPageTitle(pathname) {
     ["/app/messages", "Messages"],
     ["/app/settings", "Settings"],
     ["/app/admin/crowdfundings", "Admin Approval"],
+    ["/app/admin/community", "Community Feed"],
+    ["/app/admin/management", "Management"],
   ];
 
   return pageTitles.find(([path]) => pathname === path)?.[1] || null;
@@ -104,86 +106,115 @@ export default function DashboardLayout() {
           <SideItem to="/app" end icon={LayoutGrid} onClick={closeMobile}>
             Dashboard
           </SideItem>
-          <SideItem to="/app/community" icon={UsersRound} onClick={closeMobile}>
-            Community Feed
-          </SideItem>
+          {user?.role === "admin" ? (
+            <>
+              <SideItem
+                to="/app/admin/community"
+                icon={UsersRound}
+                onClick={closeMobile}
+              >
+                Community Feed
+              </SideItem>
+              <SideItem
+                to="/app/admin/management"
+                icon={UsersRound}
+                onClick={closeMobile}
+              >
+                Management
+              </SideItem>
+            </>
+          ) : (
+            <SideItem
+              to="/app/community"
+              icon={UsersRound}
+              onClick={closeMobile}
+            >
+              Community Feed
+            </SideItem>
+          )}
 
-          <div className="side-group-label">FINANCE</div>
-          {/* ${loanOpen ? 'open-group' : ''} */}
-          <button
-            className={`side-link side-toggle`}
-            onClick={() => setLoanOpen((v) => !v)}
-          >
-            <CreditCard size={18} />
-            <span>Loan</span>
-            <ChevronDown className="side-chevron" size={17} />
-          </button>
-          {loanOpen && (
-            <div className="side-submenu">
-              <SideItem
-                to="/app/loans"
-                icon={CircleDollarSign}
-                onClick={closeMobile}
+          {user?.role === "admin" ? (
+            <></>
+          ) : (
+            <>
+              <div className="side-group-label">FINANCE</div>
+              {/* ${loanOpen ? 'open-group' : ''} */}
+              <button
+                className={`side-link side-toggle`}
+                onClick={() => setLoanOpen((v) => !v)}
               >
-                Explore Loan Requests
-              </SideItem>
+                <CreditCard size={18} />
+                <span>Loan</span>
+                <ChevronDown className="side-chevron" size={17} />
+              </button>
+              {loanOpen && (
+                <div className="side-submenu">
+                  <SideItem
+                    to="/app/loans"
+                    icon={CircleDollarSign}
+                    onClick={closeMobile}
+                  >
+                    Explore Loan Requests
+                  </SideItem>
+                  <SideItem
+                    to="/app/my-loans"
+                    icon={FileText}
+                    onClick={closeMobile}
+                  >
+                    My Loans
+                  </SideItem>
+                  <SideItem
+                    to="/app/provided-loans"
+                    icon={HandCoins}
+                    onClick={closeMobile}
+                  >
+                    Provided Loans
+                  </SideItem>
+                </div>
+              )}
+              {/* {${crowdOpen ? 'open-group' : ''}} */}
+              <button
+                className={`side-link side-toggle`}
+                onClick={() => setCrowdOpen((v) => !v)}
+              >
+                <WalletCards size={18} />
+                <span>Crowdfunding</span>
+                <ChevronDown className="side-chevron" size={17} />
+              </button>
+              {crowdOpen && (
+                <div className="side-submenu">
+                  <SideItem
+                    to="/app/crowdfundings"
+                    icon={CircleDollarSign}
+                    onClick={closeMobile}
+                  >
+                    Current Crowdfundings
+                  </SideItem>
+                  <SideItem
+                    to="/app/my-crowdfundings"
+                    icon={FileText}
+                    onClick={closeMobile}
+                  >
+                    My Crowdfundings
+                  </SideItem>
+                  <SideItem
+                    to="/app/crowdfundings-history"
+                    icon={Gauge}
+                    onClick={closeMobile}
+                  >
+                    Crowdfundings History
+                  </SideItem>
+                </div>
+              )}
               <SideItem
-                to="/app/my-loans"
+                to="/app/transactions"
                 icon={FileText}
                 onClick={closeMobile}
               >
-                My Loans
+                Transactions
               </SideItem>
-              <SideItem
-                to="/app/provided-loans"
-                icon={HandCoins}
-                onClick={closeMobile}
-              >
-                Provided Loans
-              </SideItem>
-            </div>
+            </>
           )}
-          {/* {${crowdOpen ? 'open-group' : ''}} */}
-          <button
-            className={`side-link side-toggle`}
-            onClick={() => setCrowdOpen((v) => !v)}
-          >
-            <WalletCards size={18} />
-            <span>Crowdfunding</span>
-            <ChevronDown className="side-chevron" size={17} />
-          </button>
-          {crowdOpen && (
-            <div className="side-submenu">
-              <SideItem
-                to="/app/crowdfundings"
-                icon={CircleDollarSign}
-                onClick={closeMobile}
-              >
-                Current Crowdfundings
-              </SideItem>
-              <SideItem
-                to="/app/my-crowdfundings"
-                icon={FileText}
-                onClick={closeMobile}
-              >
-                My Crowdfundings
-              </SideItem>
-              <SideItem
-                to="/app/crowdfundings-history"
-                icon={Gauge}
-                onClick={closeMobile}
-              >
-                Crowdfundings History
-              </SideItem>
-            </div>
-          )}
-          <SideItem
-            to="/app/transactions"
-            icon={FileText}
-            onClick={closeMobile}
-          >
-            Transactions
-          </SideItem>
 
           <div className="side-group-label">COMMUNICATION</div>
           <SideItem
@@ -204,15 +235,6 @@ export default function DashboardLayout() {
           <SideItem to="/app/settings" icon={Settings} onClick={closeMobile}>
             Settings
           </SideItem>
-          {user?.role === "admin" && (
-            <SideItem
-              to="/app/admin/crowdfundings"
-              icon={ShieldCheck}
-              onClick={closeMobile}
-            >
-              Admin Approval
-            </SideItem>
-          )}
         </div>
 
         <div className="sidebar-user">

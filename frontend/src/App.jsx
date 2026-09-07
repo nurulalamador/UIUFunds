@@ -27,6 +27,8 @@ import Notifications from './pages/Notifications'
 import Settings from './pages/Settings'
 import Messages from './pages/Messages'
 import AdminCrowdfundings from './pages/AdminCrowdfundings'
+import AdminCommunity from './pages/AdminCommunity'
+import AdminManagement from './pages/AdminManagement'
 
 export default function App() {
   return (
@@ -60,6 +62,8 @@ export default function App() {
           <Route path="messages" element={<Messages />} />
           <Route path="settings" element={<Settings />} />
           <Route path="admin/crowdfundings" element={<AdminCrowdfundings />} />
+          <Route path="admin/community" element={<AdminCommunity />} />
+          <Route path="admin/management" element={<AdminManagement />} />
         </Route>
       </Route>
 

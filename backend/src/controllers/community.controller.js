@@ -135,4 +135,16 @@ async function addComment(req, res) {
   res.status(201).json({ message: 'Comment added', comment_id: result.insertId });
 }
 
-module.exports = { createPost, listPosts, getPost, getMedia, toggleReact, addComment };
+async function reportPost(req, res) {
+  const postId = Number(req.params.id);
+  const [posts] = await pool.execute('SELECT id FROM community_posts WHERE id = ? LIMIT 1', [postId]);
+  if (!posts.length) return res.status(404).json({ message: 'Post not found' });
+
+  await pool.execute(
+    'INSERT IGNORE INTO reported_posts (post_id, reporter_id) VALUES (?, ?)',
+    [postId, req.user.id]
+  );
+  res.status(201).json({ message: 'Post reported' });
+}
+
+module.exports = { createPost, listPosts, getPost, getMedia, toggleReact, addComment, reportPost };
