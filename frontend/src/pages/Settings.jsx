@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import { Alert } from "../components/UI";
 
 export default function Settings() {
+  const [darkTheme, setDarkTheme] = useState(
+    () => localStorage.getItem("uiufunds-theme") === "dark",
+  );
   const [form, setForm] = useState({
     current_password: "",
     new_password: "",
@@ -11,6 +14,13 @@ export default function Settings() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const theme = darkTheme ? "dark" : "light";
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("uiufunds-theme", theme);
+  }, [darkTheme]);
+
   const submit = async (e) => {
     e.preventDefault();
     setError("");
@@ -83,7 +93,7 @@ export default function Settings() {
             </button>
           </form>
         </section>
-        {/* <section className="detail-card">
+        <section className="detail-card">
           <h2>Application Preferences</h2>
           <div className="settings-row">
             <div>
@@ -92,7 +102,11 @@ export default function Settings() {
                 Eye relaxing energy saving dark theme.
               </div>
             </div>
-            <input type="checkbox" />
+            <input
+              type="checkbox"
+              checked={darkTheme}
+              onChange={(event) => setDarkTheme(event.target.checked)}
+            />
           </div>
           <div className="settings-row">
             <div>
@@ -103,7 +117,7 @@ export default function Settings() {
             </div>
             <input type="checkbox" defaultChecked />
           </div>
-        </section> */}
+        </section>
       </div>
     </div>
   );

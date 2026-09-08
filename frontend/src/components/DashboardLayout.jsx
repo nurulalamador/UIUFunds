@@ -13,9 +13,11 @@ import {
   Menu,
   MessageSquare,
   MonitorCog,
+  Moon,
   Search,
   Settings,
   ShieldCheck,
+  Sun,
   UserRound,
   UsersRound,
   WalletCards,
@@ -78,6 +80,15 @@ export default function DashboardLayout() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [darkTheme, setDarkTheme] = useState(
+    () => localStorage.getItem("uiufunds-theme") === "dark",
+  );
+
+  useEffect(() => {
+    const theme = darkTheme ? "dark" : "light";
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("uiufunds-theme", theme);
+  }, [darkTheme]);
 
   useEffect(() => {
     refreshUser();
@@ -279,7 +290,6 @@ export default function DashboardLayout() {
               className={`icon-button plain account-menu-toggle${accountMenuOpen ? " open" : ""}`}
               onClick={() => setAccountMenuOpen((open) => !open)}
               title="Account menu"
-              aria-expanded={accountMenuOpen}
             >
               <ChevronDown size={17} />
             </button>
@@ -342,7 +352,6 @@ export default function DashboardLayout() {
                   onFocus={() => {
                     if (searchQuery.trim()) setSearchResults(searchResults);
                   }}
-                  aria-label="Search users and crowdfundings"
                 />
               </div>
               {searchQuery.trim() && (
@@ -381,9 +390,14 @@ export default function DashboardLayout() {
                 </div>
               )}
             </div>
-            <Link to={"/app/settings"} className="icon-button round">
-              <Settings size={20} />
-            </Link>
+            <button
+              className="icon-button round"
+              type="button"
+              onClick={() => setDarkTheme((enabled) => !enabled)}
+              title={darkTheme ? "Switch to light theme" : "Switch to dark theme"}
+            >
+              {darkTheme ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
             <button
               className="icon-button round notification-button"
               onClick={() => navigate("/app/notifications")}

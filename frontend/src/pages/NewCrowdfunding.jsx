@@ -14,10 +14,10 @@ export default function NewCrowdfunding() {
     proofText: "",
   });
   const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [proof, setProof] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [imagePreview, setImagePreview] = useState("");
   useEffect(() => {
     if (!image) {
       setImagePreview("");
