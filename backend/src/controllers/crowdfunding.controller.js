@@ -31,6 +31,52 @@ async function createCrowdfunding(req, res) {
   res.status(201).json({ message: 'Crowdfunding submitted for admin approval', crowdfunding_id: result.insertId });
 }
 
+async function updateCrowdfunding(req, res) {
+  const id = Number(req.params.id);
+  const { name, description, target_amount } = req.body;
+  const target = Number(target_amount);
+
+  if (!Number.isInteger(id) || !name?.trim() || !description?.trim() || !Number.isFinite(target) || target <= 0) {
+    return res.status(400).json({ message: 'name, description and a valid target_amount are required' });
+  }
+
+  const [rows] = await pool.execute(
+    'SELECT posted_by, raised_amount FROM crowdfundings WHERE id = ? LIMIT 1',
+    [id]
+  );
+  if (!rows.length || rows[0].posted_by !== req.user.id) {
+    return res.status(404).json({ message: 'Crowdfunding not found' });
+  }
+  if (target < Number(rows[0].raised_amount)) {
+    return res.status(400).json({ message: 'Target amount cannot be less than donations already received' });
+  }
+
+  const image = req.file;
+  if (image && !image.mimetype.startsWith('image/')) {
+    return res.status(400).json({ message: 'A valid campaign image is required' });
+  }
+
+  if (image) {
+    await pool.execute(
+      `UPDATE crowdfundings
+       SET name = ?, description = ?, target_amount = ?, image_blob = ?,
+           approval_status = 'pending', is_approved = FALSE
+       WHERE id = ? AND posted_by = ?`,
+      [name.trim(), description.trim(), target, image.buffer, id, req.user.id]
+    );
+  } else {
+    await pool.execute(
+      `UPDATE crowdfundings
+       SET name = ?, description = ?, target_amount = ?,
+           approval_status = 'pending', is_approved = FALSE
+       WHERE id = ? AND posted_by = ?`,
+      [name.trim(), description.trim(), target, id, req.user.id]
+    );
+  }
+
+  res.json({ message: 'Crowdfunding updated and submitted for admin approval' });
+}
+
 async function listCrowdfundings(req, res) {
   const [rows] = await pool.execute(
     `SELECT c.id, c.posted_by, c.name, c.description, c.target_amount, c.raised_amount,
@@ -348,7 +394,7 @@ async function listCompletedCrowdfundings(req, res) {
 }
 
 module.exports = {
-  createCrowdfunding, listCrowdfundings, listCompletedCrowdfundings, getCrowdfunding, myCrowdfundings,
+  createCrowdfunding, updateCrowdfunding, listCrowdfundings, listCompletedCrowdfundings, getCrowdfunding, myCrowdfundings,
   getCrowdfundingImage,
   pendingCrowdfundings, approveCrowdfunding, rejectCrowdfunding,
   donate, addSpendItem, getSpendProof,

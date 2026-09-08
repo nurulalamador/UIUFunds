@@ -16,6 +16,8 @@ export default function Crowdfundings() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [view, setView] = useState("grid");
+  const [sortBy, setSortBy] = useState("recent");
 
   const load = () =>
     api("/crowdfundings")
@@ -25,6 +27,13 @@ export default function Crowdfundings() {
   useEffect(() => {
     load();
   }, []);
+  const sortedCampaigns = [...campaigns].sort((a, b) => {
+    if (sortBy === "goal") {
+      return Number(b.target_amount) - Number(a.target_amount);
+    }
+
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
   const donate = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -59,22 +68,31 @@ export default function Crowdfundings() {
             <SlidersHorizontal size={18} />
             <span>Filter</span>
           </div>
-          <select>
-            <option>Recently Posted</option>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="recent">Recently Posted</option>
+            <option value="goal">Goal: High to Low</option>
           </select>
         </div>
         <div className="view-switch">
-          <button className="active">
+          <button
+            type="button"
+            className={view === "grid" ? "active" : ""}
+            onClick={() => setView("grid")}
+          >
             <LayoutGrid size={17} />
           </button>
-          <button>
+          <button
+            type="button"
+            className={view === "list" ? "active" : ""}
+            onClick={() => setView("list")}
+          >
             <List size={17} />
           </button>
         </div>
       </div>
-      {campaigns.length ? (
-        <div className="campaign-list grid">
-          {campaigns.map((c, i) => (
+      {sortedCampaigns.length ? (
+        <div className={view === "list" ? "campaign-list" : "campaign-grid"}>
+          {sortedCampaigns.map((c) => (
             <div className="campaign-card" key={c.id}>
               <img src={`${API_URL}${c.image_url}`} alt={c.name} />
               <div className="campaign-body">
@@ -134,7 +152,10 @@ export default function Crowdfundings() {
       >
         <form className="modal-form" onSubmit={donate}>
           <div className="donation-summary">
-            <img src={selected ? `${API_URL}${selected?.image_url}` : ""} alt={selected?.name || ""} />
+            <img
+              src={selected ? `${API_URL}${selected?.image_url}` : ""}
+              alt={selected?.name || ""}
+            />
             <div>
               <strong>{selected?.name}</strong>
               <span>

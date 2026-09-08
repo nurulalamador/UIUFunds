@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, LayoutGrid, List, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { Alert, EmptyState, LoadingBlock } from "../components/UI";
@@ -9,6 +9,7 @@ export default function ProvidedLoans() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [view, setView] = useState("grid");
   useEffect(() => {
     api("/loans/mine/provided")
       .then((d) => setLoans(d.provided_loans || []))
@@ -29,9 +30,26 @@ export default function ProvidedLoans() {
             <option>Time Remaining</option>
           </select>
         </div>
+
+        <div className="view-switch">
+          <button
+            type="button"
+            className={view === "grid" ? "active" : ""}
+            onClick={() => setView("grid")}
+          >
+            <LayoutGrid size={17} />
+          </button>
+          <button
+            type="button"
+            className={view === "list" ? "active" : ""}
+            onClick={() => setView("list")}
+          >
+            <List size={17} />
+          </button>
+        </div>
       </div>
       {loans.length ? (
-        <div className="loan-grid two">
+        <div className={view === "list" ? "loan-list" : "loan-grid two"}>
           {loans.map((l) => (
             <article className="provided-card" key={l.id}>
               <div className="provided-head">
@@ -39,7 +57,10 @@ export default function ProvidedLoans() {
                   <img src="/assets/avatar.jpg" alt="" />
                   <div className="user-details">
                     <div className="user-name">{l.borrower_name}</div>
-                    <Link className="user-profile" to={`/app/profile/${l.borrower_id}`}>
+                    <Link
+                      className="user-profile"
+                      to={`/app/profile/${l.borrower_id}`}
+                    >
                       View Profile
                       <ArrowRight size={14} />
                     </Link>
@@ -47,7 +68,9 @@ export default function ProvidedLoans() {
                 </div>
                 <div className="provided-total">
                   <div className="provided-total-title">Total Amount</div>
-                  <div className="provided-total-amount">{money(l.principal_amount)}</div>
+                  <div className="provided-total-amount">
+                    {money(l.principal_amount)}
+                  </div>
                 </div>
               </div>
               <div className="loan-info-grid">

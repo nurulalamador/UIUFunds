@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LayoutGrid, List, Plus, SlidersHorizontal } from "lucide-react";
+import { Banknote, LayoutGrid, List, Plus, SlidersHorizontal, Wallet } from "lucide-react";
 import { api, jsonBody } from "../api/client";
 import Modal from "../components/Modal";
 import { Alert, EmptyState, LoadingBlock } from "../components/UI";
@@ -11,6 +11,7 @@ export default function Transactions() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [action, setAction] = useState("topup");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -23,13 +24,14 @@ export default function Transactions() {
   useEffect(() => {
     load();
   }, []);
-  const topup = async (e) => {
+  const submitTransaction = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError("");
     setSuccess("");
     try {
-      const d = await api("/transactions/demo-topup", {
+      const isTopup = action === "topup";
+      const d = await api(isTopup ? "/transactions/demo-topup" : "/transactions/cash-out", {
         method: "POST",
         body: jsonBody({ amount: Number(amount) }),
       });
@@ -52,16 +54,24 @@ export default function Transactions() {
     <div className="content-container">
       <Alert>{error && !open ? error : ""}</Alert>
       <div className="toolbar">
-        <button
-          className="button primary"
-          onClick={() => {
+        <div className="button-group">
+          <button className="button primary" onClick={() => {
+            setAction("topup");
             setOpen(true);
             setError("");
-          }}
-        >
-          <Plus size={16} />
-          Add Balance
-        </button>
+          }}>
+            <Plus size={16} />
+            Add Balance
+          </button>
+          <button className="button primary-soft" onClick={() => {
+            setAction("cashout");
+            setOpen(true);
+            setError("");
+          }}>
+            <Wallet size={16} />
+            Cash Out
+          </button>
+        </div>
         <div className="toolbar-right">
           <div className="filter-row">
             <div className="filter-row-title">
@@ -72,14 +82,14 @@ export default function Transactions() {
               <option>Recently Posted</option>
             </select>
           </div>
-          <div className="view-switch">
+          {/* <div className="view-switch">
             <button className="active">
               <List size={17} />
             </button>
             <button>
               <LayoutGrid size={17} />
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
       {items.length ? (
@@ -93,7 +103,9 @@ export default function Transactions() {
                   {String(t.transaction_type || "").replaceAll("_", " ")}
                 </div>
               </div>
-              <div className={`transaction-row-amount ${t.direction === "credit" ? "credit" : "debit"}`}>
+              <div
+                className={`transaction-row-amount ${t.direction === "credit" ? "credit" : "debit"}`}
+              >
                 {t.direction === "credit" ? "+" : "-"}
                 {money(t.amount)}
               </div>
@@ -106,10 +118,14 @@ export default function Transactions() {
           text="Wallet activity, loans and crowdfunding transactions will appear here."
         />
       )}
-      <Modal open={open} onClose={() => setOpen(false)} title="Add Balance">
-        <form className="modal-form" onSubmit={topup}>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={action === "topup" ? "Add Balance" : "Cash Out"}
+      >
+        <form className="modal-form" onSubmit={submitTransaction}>
           <label>
-            Payment Method
+            {action === "topup" ? "Payment Method" : "Cash Out Method"}
             <div className="radio-container">
               <input type="radio" name="payment-method" checked /> bKash
             </div>
@@ -133,7 +149,9 @@ export default function Transactions() {
           <Alert>{error}</Alert>
           <Alert type="success">{success}</Alert>
           <button className="button primary full" disabled={busy}>
-            {busy ? "Adding..." : "Add Balance"}
+            {busy
+              ? action === "topup" ? "Adding..." : "Cashing out..."
+              : action === "topup" ? "Add Balance" : "Cash Out"}
           </button>
         </form>
       </Modal>

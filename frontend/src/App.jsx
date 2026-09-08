@@ -15,8 +15,10 @@ import LoanOffers from './pages/LoanOffers'
 import ProvidedLoans from './pages/ProvidedLoans'
 import ProvidedLoanDetails from './pages/ProvidedLoanDetails'
 import Crowdfundings from './pages/Crowdfundings'
+import CrowdfundingDetails from './pages/CrowdfundingDetails'
 import MyCrowdfundings from './pages/MyCrowdfundings'
 import NewCrowdfunding from './pages/NewCrowdfunding'
+import EditCrowdfunding from './pages/EditCrowdfunding'
 import ManageSpent from './pages/ManageSpent'
 import CrowdfundingHistory from './pages/CrowdfundingHistory'
 import SpentHistory from './pages/SpentHistory'
@@ -51,6 +53,8 @@ export default function App() {
           <Route path="provided-loans/:id" element={<ProvidedLoanDetails />} />
           <Route path="crowdfundings" element={<Crowdfundings />} />
           <Route path="crowdfundings/new" element={<NewCrowdfunding />} />
+          <Route path="crowdfundings/:id" element={<CrowdfundingDetails />} />
+          <Route path="crowdfundings/:id/edit" element={<EditCrowdfunding />} />
           <Route path="crowdfundings-history" element={<CrowdfundingHistory />} />
           <Route path="crowdfundings/:id/manage-spent" element={<ManageSpent />} />
           <Route path="crowdfundings/:id/spent" element={<SpentHistory />} />

@@ -10,6 +10,8 @@ export default function CrowdfundingHistory() {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [view, setView] = useState("grid");
+  
   useEffect(() => {
     api("/crowdfundings/history")
       .then((d) => setCampaigns(d.crowdfundings || []))
@@ -29,18 +31,27 @@ export default function CrowdfundingHistory() {
           <select>
             <option>Recently Posted</option>
           </select>
-        </div>
+        </div>{" "}
+
         <div className="view-switch">
-          <button className="active">
+          <button
+            type="button"
+            className={view === "grid" ? "active" : ""}
+            onClick={() => setView("grid")}
+          >
             <LayoutGrid size={17} />
           </button>
-          <button>
+          <button
+            type="button"
+            className={view === "list" ? "active" : ""}
+            onClick={() => setView("list")}
+          >
             <List size={17} />
           </button>
         </div>
       </div>
       {campaigns.length ? (
-        <div className="campaign-list grid">
+        <div className={view === "list" ? "campaign-list" : "campaign-grid"}>
           {campaigns.map((c, i) => (
             <div className="campaign-card" key={c.id}>
               <img src={`${API_URL}${c.image_url}`} alt={c.name} />

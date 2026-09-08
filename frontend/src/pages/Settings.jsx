@@ -83,7 +83,7 @@ export default function Settings() {
             </button>
           </form>
         </section>
-        <section className="detail-card">
+        {/* <section className="detail-card">
           <h2>Application Preferences</h2>
           <div className="settings-row">
             <div>
@@ -103,7 +103,7 @@ export default function Settings() {
             </div>
             <input type="checkbox" defaultChecked />
           </div>
-        </section>
+        </section> */}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
   ChevronDown,
@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   MessageSquare,
+  MonitorCog,
   Search,
   Settings,
   ShieldCheck,
@@ -74,6 +75,9 @@ export default function DashboardLayout() {
   const [crowdOpen, setCrowdOpen] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
     refreshUser();
@@ -85,6 +89,25 @@ export default function DashboardLayout() {
       })
       .catch(() => {});
   }, [location.pathname, refreshUser]);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!query) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return undefined;
+    }
+
+    setSearchLoading(true);
+    const timer = setTimeout(() => {
+      api(`/search?q=${encodeURIComponent(query)}`)
+        .then((data) => setSearchResults(data.results || []))
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearchLoading(false));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const closeMobile = () => setMobileOpen(false);
 
@@ -117,7 +140,7 @@ export default function DashboardLayout() {
               </SideItem>
               <SideItem
                 to="/app/admin/management"
-                icon={UsersRound}
+                icon={MonitorCog}
                 onClick={closeMobile}
               >
                 Management
@@ -265,7 +288,7 @@ export default function DashboardLayout() {
                 <button
                   onClick={() => {
                     setAccountMenuOpen(false);
-                    navigate(`/app/profile/${user?.id}`);
+                    navigate(`/app/profile`);
                   }}
                 >
                   <UserRound size={16} />
@@ -309,13 +332,58 @@ export default function DashboardLayout() {
             </button>
             <div className="topbar-page-title">{pageTitle}</div>
             <div className="topbar-spacer" />
-            <div className="top-search">
+            <div className="top-search-wrap">
+              <div className="top-search">
               <Search size={18} />
-              <input placeholder="Search" />
+                <input
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onFocus={() => {
+                    if (searchQuery.trim()) setSearchResults(searchResults);
+                  }}
+                  aria-label="Search users and crowdfundings"
+                />
+              </div>
+              {searchQuery.trim() && (
+                <div className="search-results" role="listbox">
+                  {searchLoading ? (
+                    <div className="search-result-status">Searching...</div>
+                  ) : searchResults.length ? (
+                    searchResults.map((result) => (
+                      <button
+                        className="search-result"
+                        key={`${result.type}-${result.id}`}
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSearchResults([]);
+                          navigate(
+                            result.type === "user"
+                              ? `/app/profile/${result.id}`
+                              : `/app/crowdfundings/${result.id}`,
+                          );
+                        }}
+                      >
+                        <span className={`search-result-icon ${result.type}`}>
+                          {result.type === "user" ? <UserRound size={16} /> : <WalletCards size={16} />}
+                        </span>
+                        <span className="search-result-copy">
+                          <div className="search-result-title">{result.title}</div>
+                          <div className="search-result-details">{result.subtitle}</div>
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="search-result-status">No results found</div>
+                  )}
+                </div>
+              )}
             </div>
-            <button className="icon-button round">
+            <Link to={"/app/settings"} className="icon-button round">
               <Settings size={20} />
-            </button>
+            </Link>
             <button
               className="icon-button round notification-button"
               onClick={() => navigate("/app/notifications")}

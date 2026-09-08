@@ -156,6 +156,9 @@ export default function AdminManagement() {
                     </strong>
                   </>
                 )}
+                {section === "users" && status === "pending" && (
+                  <img src="/assets/id_card.png" />
+                )}
               </div>
               <div className="moderation-actions">
                 {((section === "users" && status === "pending") ||

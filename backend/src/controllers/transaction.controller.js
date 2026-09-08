@@ -45,4 +45,45 @@ async function demoTopup(req, res) {
   }
 }
 
-module.exports = { myTransactions, demoTopup };
+async function cashOut(req, res) {
+  const amount = Number(req.body.amount);
+  if (!Number.isFinite(amount) || amount <= 0 || amount > 1000000) {
+    return res.status(400).json({ message: 'Enter a valid amount between 0 and 1,000,000' });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [userRows] = await conn.execute(
+      'SELECT id, balance FROM users WHERE id = ? FOR UPDATE',
+      [req.user.id]
+    );
+    const user = userRows[0];
+
+    if (!user || Number(user.balance) < amount) {
+      await conn.rollback();
+      return res.status(400).json({ message: 'Insufficient wallet balance' });
+    }
+
+    await conn.execute('UPDATE users SET balance = balance - ? WHERE id = ?', [amount, req.user.id]);
+    await addTransaction(conn, {
+      userId: req.user.id,
+      title: 'Wallet cash out',
+      amount,
+      transactionType: 'withdrawal',
+      direction: 'debit',
+      transactedFrom: req.user.id,
+      referenceType: 'other',
+    });
+    await conn.commit();
+    const [rows] = await pool.execute('SELECT balance FROM users WHERE id = ?', [req.user.id]);
+    res.json({ message: 'Cash out successful', balance: rows[0].balance });
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
+  }
+}
+
+module.exports = { myTransactions, demoTopup, cashOut };

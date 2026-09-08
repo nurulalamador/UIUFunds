@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Flag, HandCoins, ShieldCheck, UsersRound } from "lucide-react";
+import {
+  ArrowRight,
+  Flag,
+  HandCoins,
+  ShieldCheck,
+  UsersRound,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { Alert, LoadingBlock, StatCard } from "../components/UI";
 
 export default function AdminDashboard() {
-  const [counts, setCounts] = useState({ pendingUsers: 0, reports: 0, pendingCrowdfundings: 0, ongoingCrowdfundings: 0 });
+  const [counts, setCounts] = useState({
+    pendingUsers: 0,
+    reports: 0,
+    pendingCrowdfundings: 0,
+    ongoingCrowdfundings: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -16,12 +27,14 @@ export default function AdminDashboard() {
       api("/admin/crowdfundings?status=pending"),
       api("/admin/crowdfundings?status=active"),
     ])
-      .then(([users, reports, pending, ongoing]) => setCounts({
-        pendingUsers: users.users?.length || 0,
-        reports: reports.posts?.length || 0,
-        pendingCrowdfundings: pending.crowdfundings?.length || 0,
-        ongoingCrowdfundings: ongoing.crowdfundings?.length || 0,
-      }))
+      .then(([users, reports, pending, ongoing]) =>
+        setCounts({
+          pendingUsers: users.users?.length || 0,
+          reports: reports.posts?.length || 0,
+          pendingCrowdfundings: pending.crowdfundings?.length || 0,
+          ongoingCrowdfundings: ongoing.crowdfundings?.length || 0,
+        }),
+      )
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -42,18 +55,52 @@ export default function AdminDashboard() {
       <div className="stats-grid four">
         <StatCard label="Pending Users" value={counts.pendingUsers} />
         <StatCard label="Reported Posts" value={counts.reports} tone="red" />
-        <StatCard label="Pending Crowdfundings" value={counts.pendingCrowdfundings} />
-        <StatCard label="Ongoing Crowdfundings" value={counts.ongoingCrowdfundings} />
+        <StatCard
+          label="Pending Crowdfundings"
+          value={counts.pendingCrowdfundings}
+        />
+        <StatCard
+          label="Ongoing Crowdfundings"
+          value={counts.ongoingCrowdfundings}
+        />
       </div>
       <div className="admin-quick-grid">
         <Link className="admin-quick-link" to="/app/admin/community">
-          <Flag size={22} /><span><strong>Review community</strong><small>{counts.reports} reported post(s) need attention</small></span><ArrowRight size={18} />
+          <Flag size={80} />
+          <div className="admin-quick-link-body">
+            <span>
+              <strong>Review community</strong>
+              <small>{counts.reports} reported post(s) need attention</small>
+            </span>
+            <ArrowRight size={20} />
+          </div>
         </Link>
         <Link className="admin-quick-link" to="/app/admin/management">
-          <UsersRound size={22} /><span><strong>Manage users</strong><small>{counts.pendingUsers} account(s) waiting for approval</small></span><ArrowRight size={18} />
+          <UsersRound size={80} />
+          <div className="admin-quick-link-body">
+            <span>
+              <strong>Manage users</strong>
+              <small>
+                {counts.pendingUsers} account(s) waiting for approval
+              </small>
+            </span>
+            <ArrowRight size={20} />
+          </div>
         </Link>
-        <Link className="admin-quick-link" to="/app/admin/management?tab=crowdfundings">
-          <HandCoins size={22} /><span><strong>Review campaigns</strong><small>{counts.pendingCrowdfundings} campaign(s) waiting for approval</small></span><ArrowRight size={18} />
+        <Link
+          className="admin-quick-link"
+          to="/app/admin/management?tab=crowdfundings"
+        >
+          <HandCoins size={80} />
+          <div className="admin-quick-link-body">
+            <span>
+              <strong>Review campaigns</strong>
+              <small>
+                {counts.pendingCrowdfundings} campaign(s) waiting for approval
+              </small>
+            </span>
+            <ArrowRight size={20} />
+          </div>
         </Link>
       </div>
     </div>

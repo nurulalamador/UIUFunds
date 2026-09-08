@@ -23,7 +23,7 @@ export default function MyCrowdfundings() {
         const list = d.crowdfundings || [];
         setCampaigns(list);
         const rs = await Promise.allSettled(
-          list.map((c) => api(`/crowdfundings/${c.id}`)),
+          list.map((c) => api(`/crowdfundings/mine/${c.id}`)),
         );
         const m = {};
         rs.forEach((r, i) => {
@@ -78,14 +78,14 @@ export default function MyCrowdfundings() {
               <option>Recently Posted</option>
             </select>
           </div>
-          <div className="view-switch">
+          {/* <div className="view-switch">
             <button className="active">
               <LayoutGrid size={17} />
             </button>
             <button>
               <List size={17} />
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
       {campaigns.length ? (
@@ -135,7 +135,12 @@ export default function MyCrowdfundings() {
                   />
                 </div>
                 <div className="card-button-row">
-                  <button className="button muted">Edit Details</button>
+                  <Link
+                    className="button muted"
+                    to={`/app/crowdfundings/${c.id}/edit`}
+                  >
+                    Edit Details
+                  </Link>
                   {c.approval_status === "approved" ? (
                     <Link
                       className="button primary-soft"

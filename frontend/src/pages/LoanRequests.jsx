@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { LayoutGrid, List, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, LayoutGrid, List, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api, jsonBody } from "../api/client";
 import Modal from "../components/Modal";
 import { Alert, Badge, EmptyState, LoadingBlock } from "../components/UI";
 import { useAuth } from "../contexts/AuthContext";
 import { money } from "../utils/format";
-import { BiRightArrow, BiRightArrowAlt } from "react-icons/bi";
+
 
 function LoanCard({ loan, onOffer, me }) {
   return (
@@ -17,7 +17,7 @@ function LoanCard({ loan, onOffer, me }) {
           <div className="user-name">{loan.requester_name}</div>
           <Link className="user-profile" to={`/app/profile/${loan.requester_id}`}>
             View Profile
-            <BiRightArrowAlt size={14} />
+            <ArrowRight size={14} />
           </Link>
         </div>
         <Badge tone={loan.priority == "urgent" ? "orange" : "soft"}>
@@ -60,6 +60,8 @@ export default function LoanRequests() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [view, setView] = useState("grid");
+  const [sortBy, setSortBy] = useState("recent");
 
   const load = () =>
     api("/loans?status=open")
@@ -69,6 +71,16 @@ export default function LoanRequests() {
   useEffect(() => {
     load();
   }, []);
+
+  const sortedLoans = [...loans].sort((a, b) => {
+    if (sortBy === "amount") {
+      return Number(a.amount) - Number(b.amount);
+    }
+
+    const aTime = new Date(a.created_at || a.createdAt || 0).getTime();
+    const bTime = new Date(b.created_at || b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
 
   const openOffer = (loan) => {
     setSelected(loan);
@@ -119,23 +131,34 @@ export default function LoanRequests() {
             <SlidersHorizontal size={18} />
             <span>Filter</span>
           </div>
-          <select>
-            <option>Recently Posted</option>
-            <option>Amount: Low to High</option>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="recent">Recently Posted</option>
+            <option value="amount">Amount: Low to High</option>
           </select>
         </div>
         <div className="view-switch">
-          <button className="active">
+          <button
+            type="button"
+            className={view === "grid" ? "active" : ""}
+            onClick={() => setView("grid")}
+          >
             <LayoutGrid size={17} />
           </button>
-          <button>
+          <button
+            type="button"
+            className={view === "list" ? "active" : ""}
+            onClick={() => setView("list")}
+          >
             <List size={17} />
           </button>
         </div>
       </div>
-      {loans.length ? (
-        <div className="loan-grid">
-          {loans.map((l) => (
+      {sortedLoans.length ? (
+        <div className={view === "list" ? "loan-list" : "loan-grid"}>
+          {sortedLoans.map((l) => (
             <LoanCard key={l.id} loan={l} onOffer={openOffer} me={user} />
           ))}
         </div>
@@ -165,7 +188,7 @@ export default function LoanRequests() {
                   to={`/app/profile/${selected.requester_id}`}
                 >
                   View Profile
-                  <BiRightArrowAlt size={14} />
+                  <ArrowRight size={14} />
                 </Link>
               </div>
               <Badge tone={selected.priority == "urgent" ? "orange" : "soft"}>

@@ -606,5 +606,3 @@ CREATE TABLE messages (
     INDEX idx_messages_conversation (sender_id, receiver_id, sent_at),
     INDEX idx_messages_unread (receiver_id, is_read)
 );
-
-

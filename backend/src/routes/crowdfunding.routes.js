@@ -13,7 +13,9 @@ router.patch('/admin/:id/approve', auth, admin, asyncHandler(c.approveCrowdfundi
 router.patch('/admin/:id/reject', auth, admin, asyncHandler(c.rejectCrowdfunding));
 router.get('/:id/image', asyncHandler(c.getCrowdfundingImage));
 router.get('/spend/:spendId/proof', asyncHandler(c.getSpendProof));
+router.get('/mine/:id', auth, asyncHandler(c.getCrowdfunding));
 router.post('/', auth, upload.single('image'), asyncHandler(c.createCrowdfunding));
+router.patch('/:id', auth, upload.single('image'), asyncHandler(c.updateCrowdfunding));
 router.post('/:id/donate', auth, asyncHandler(c.donate));
 router.post('/:id/spend-items', auth, upload.single('proof'), asyncHandler(c.addSpendItem));
 router.get('/:id', asyncHandler(c.getCrowdfunding));

@@ -1,32 +1,48 @@
-import { ArrowLeft, Camera, Plus } from "lucide-react";
+import { Camera } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
-import { Alert } from "../components/UI";
+import { API_URL } from "../config";
+import { Alert, LoadingBlock } from "../components/UI";
 import TopbarAlt from "../components/TopbarAlt";
 
-export default function NewCrowdfunding() {
+export default function EditCrowdfunding() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [form, setForm] = useState({
     name: "",
     description: "",
     target_amount: "",
-    proofText: "",
   });
   const [image, setImage] = useState(null);
-  const [proof, setProof] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [imagePreview, setImagePreview] = useState("");
+
   useEffect(() => {
-    if (!image) {
-      setImagePreview("");
-      return undefined;
-    }
+    api(`/crowdfundings/mine/${id}`)
+      .then(({ crowdfunding }) => {
+        setForm({
+          name: crowdfunding.name || "",
+          description: crowdfunding.description || "",
+          target_amount: crowdfunding.target_amount || "",
+        });
+        if (crowdfunding.image_url) {
+          setImagePreview(`${API_URL}${crowdfunding.image_url}`);
+        }
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  useEffect(() => {
+    if (!image) return undefined;
     const url = URL.createObjectURL(image);
     setImagePreview(url);
     return () => URL.revokeObjectURL(url);
   }, [image]);
+
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -38,10 +54,7 @@ export default function NewCrowdfunding() {
       body.append("target_amount", String(Number(form.target_amount)));
       if (image) body.append("image", image);
 
-      await api("/crowdfundings", {
-        method: "POST",
-        body,
-      });
+      await api(`/crowdfundings/${id}`, { method: "PATCH", body });
       navigate("/app/my-crowdfundings");
     } catch (e) {
       setError(e.message);
@@ -49,12 +62,15 @@ export default function NewCrowdfunding() {
       setBusy(false);
     }
   };
+
+  if (loading) return <LoadingBlock text="Loading crowdfunding details..." />;
+
   return (
     <>
-      <TopbarAlt title="Post New Crowdfunding" />
+      <TopbarAlt title="Edit Crowdfunding" />
       <div className="content-container">
         <form className="center-form-card crowdfunding-form" onSubmit={submit}>
-          <h2>Enter Crowdfunding Details</h2>
+          <h2>Edit Crowdfunding Details</h2>
           <Alert>{error}</Alert>
           <label>
             Title
@@ -108,7 +124,7 @@ export default function NewCrowdfunding() {
             </div>
           </label>
           <button className="button primary full" disabled={busy}>
-            {busy ? "Submitting..." : "Submit for Approval"}
+            {busy ? "Saving..." : "Save Changes"}
           </button>
         </form>
       </div>

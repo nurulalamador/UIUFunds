@@ -23,6 +23,8 @@ export default function MyLoans() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState(null);
+  const [view, setView] = useState("grid");
+  const [sortBy, setSortBy] = useState("recent");
   useEffect(() => {
     Promise.allSettled([
       api("/loans/mine/requests"),
@@ -56,6 +58,19 @@ export default function MyLoans() {
     }),
     [requests, borrowed],
   );
+  const allLoans = [...requests, ...borrowed];
+  const sortedLoans = [...allLoans].sort((a, b) => {
+    if (sortBy === "amount") {
+      const aAmount = Number(a.amount ?? a.principal_amount ?? 0);
+      const bAmount = Number(b.amount ?? b.principal_amount ?? 0);
+      return bAmount - aAmount;
+    }
+
+    const aTime = new Date(a.created_at || a.createdAt || 0).getTime();
+    const bTime = new Date(b.created_at || b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
+
   const removeRequest = async (loanId) => {
     if (
       !window.confirm(
@@ -103,129 +118,143 @@ export default function MyLoans() {
               <SlidersHorizontal size={17} />
               <span>Filter</span>
             </div>
-            <select>
-              <option>Recently Posted</option>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="recent">Recently Posted</option>
+              <option value="amount">Amount: High to Low</option>
             </select>
           </div>
           <div className="view-switch">
-            <button className="active">
+            <button
+              type="button"
+              className={view === "grid" ? "active" : ""}
+              onClick={() => setView("grid")}
+            >
               <LayoutGrid size={17} />
             </button>
-            <button>
+            <button
+              type="button"
+              className={view === "list" ? "active" : ""}
+              onClick={() => setView("list")}
+            >
               <List size={17} />
             </button>
           </div>
         </div>
       </div>
       {requests.length || borrowed.length ? (
-        <div className="loan-grid two">
-          {requests.map((l) => (
-            <div className="my-loan-card" key={`r-${l.id}`}>
-              <div className="card-top">
-                <Badge>
-                  {Number(l.duration_months) <= 3 ? "Urgent" : "Normal"}
-                </Badge>
-                <div className="card-top-details">
-                  <div className="card-top-details-title">Duration</div>
-                  <div className="card-top-details-count">
-                    {l.duration_months} Months
+        <div className={view === "list" ? "loan-list" : "loan-grid two"}>
+          {sortedLoans.map((l) => {
+            if ("pending_offer_count" in l) {
+              return (
+                <div className="my-loan-card" key={`r-${l.id}`}>
+                  <div className="card-top">
+                    <Badge>
+                      {Number(l.duration_months) <= 3 ? "Urgent" : "Normal"}
+                    </Badge>
+                    <div className="card-top-details">
+                      <div className="card-top-details-title">Duration</div>
+                      <div className="card-top-details-count">
+                        {l.duration_months} Months
+                      </div>
+                    </div>
+                  </div>
+                  <div className="loan-amount left">
+                    <div className="loan-amount-title">Amount Requested</div>
+                    <div className="loan-amount-count">{money(l.amount)}</div>
+                  </div>
+                  <div className="loan-info-grid">
+                    <span>Interest Allowed</span>
+                    <b>{l.interest_allowed ? "Yes" : "No"}</b>
+                    <span>Repayment Plan</span>
+                    <b>{l.installment} Installment</b>
+                  </div>
+                  <div className="offer-count-row">
+                    <span>
+                      Total Offer <b>{l.pending_offer_count || 0}</b>
+                    </span>
+                    {Number(l.pending_offer_count) > 0 && (
+                      <Link to={`/app/loans/${l.id}/offers`}>
+                        See All Offers
+                        <ArrowRight size={14} />
+                      </Link>
+                    )}
+                  </div>
+                  <div className="card-button-row">
+                    <button
+                      className="button danger-soft"
+                      onClick={() => removeRequest(l.id)}
+                      disabled={removingId === l.id}
+                    >
+                      {removingId === l.id ? "Removing..." : "Remove Loan Request"}
+                    </button>
                   </div>
                 </div>
-              </div>
-              <div className="loan-amount left">
-                <div className="loan-amount-title">Amount Requested</div>
-                <div className="loan-amount-count">{money(l.amount)}</div>
-              </div>
-              <div className="loan-info-grid">
-                <span>Interest Allowed</span>
-                <b>{l.interest_allowed ? "Yes" : "No"}</b>
-                <span>Repayment Plan</span>
-                <b>{l.installment} Installment</b>
-              </div>
-              <div className="offer-count-row">
-                <span>
-                  Total Offer <b>{l.pending_offer_count || 0}</b>
-                </span>
-                {Number(l.pending_offer_count) > 0 && (
-                  <Link to={`/app/loans/${l.id}/offers`}>
-                    See All Offers
-                    <ArrowRight size={14} />
+              );
+            }
+
+            return (
+              <div className="my-loan-card" key={`b-${l.id}`}>
+                <div className="card-top">
+                  <Badge>{l.status}</Badge>
+                  <div className="card-top-details">
+                    <div className="card-top-details-title">Duration</div>
+                    <div className="card-top-details-count">
+                      {l.total_installments} Payments
+                    </div>
+                  </div>
+                </div>
+                <div className="loan-amount left">
+                  <div className="loan-amount-title">Received Amount</div>
+                  <div className="loan-amount-count">
+                    {money(l.principal_amount)}
+                  </div>
+                </div>
+                <div className="loan-info-grid">
+                  <span>Interest</span>
+                  <b>{l.interest_rate}%</b>
+                  <span>Repayment Plan</span>
+                  <b>{l.total_installments} Installment</b>
+                  <span>Provider</span>
+                  <b>{l.provider_name}</b>
+                </div>
+                <div className="loan-info-grid border">
+                  <span>Total Due</span>
+                  <b>
+                    {money(
+                      Math.max(
+                        0,
+                        Number(l.total_payable_amount) - Number(l.paid_amount),
+                      ),
+                    )}
+                  </b>
+                </div>
+                <div className="progress">
+                  <span
+                    style={{
+                      width: `${Math.min(100, (Number(l.paid_amount || 0) / Number(l.total_payable_amount || 1)) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <div className="card-button-row">
+                  <Link
+                    className="button muted"
+                    to={`/app/provided-loans/${l.id}`}
+                  >
+                    View Details
                   </Link>
-                )}
-              </div>
-              <div className="card-button-row">
-                {/* <button className="button muted">
-                  Edit Details
-                </button> */}
-                <button
-                  className="button danger-soft"
-                  onClick={() => removeRequest(l.id)}
-                  disabled={removingId === l.id}
-                >
-                  {removingId === l.id ? "Removing..." : "Remove Loan Request"}
-                </button>
-              </div>
-            </div>
-          ))}
-          {borrowed.map((l) => (
-            <div className="my-loan-card" key={`b-${l.id}`}>
-              <div className="card-top">
-                <Badge>{l.status}</Badge>
-                <div className="card-top-details">
-                  <div className="card-top-details-title">Duration</div>
-                  <div className="card-top-details-count">
-                    {l.total_installments} Payments
-                  </div>
+                  <Link
+                    className="button primary-soft"
+                    to={`/app/provided-loans/${l.id}`}
+                  >
+                    Return Money
+                  </Link>
                 </div>
               </div>
-              <div className="loan-amount left">
-                <div className="loan-amount-title">Received Amount</div>
-                <div className="loan-amount-count">
-                  {money(l.principal_amount)}
-                </div>
-              </div>
-              <div className="loan-info-grid">
-                <span>Interest</span>
-                <b>{l.interest_rate}%</b>
-                <span>Repayment Plan</span>
-                <b>{l.total_installments} Installment</b>
-                <span>Provider</span>
-                <b>{l.provider_name}</b>
-              </div>
-              <div className="loan-info-grid border">
-                <span>Total Due</span>
-                <b>
-                  {money(
-                    Math.max(
-                      0,
-                      Number(l.total_payable_amount) - Number(l.paid_amount),
-                    ),
-                  )}
-                </b>
-              </div>
-              <div className="progress">
-                <span
-                  style={{
-                    width: `${Math.min(100, (Number(l.paid_amount || 0) / Number(l.total_payable_amount || 1)) * 100)}%`,
-                  }}
-                />
-              </div>
-              <div className="card-button-row">
-                <Link
-                  className="button muted"
-                  to={`/app/provided-loans/${l.id}`}
-                >
-                  View Details
-                </Link>
-                <Link
-                  className="button primary-soft"
-                  to={`/app/provided-loans/${l.id}`}
-                >
-                  Return Money
-                </Link>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <EmptyState
