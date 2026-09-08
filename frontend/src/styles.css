@@ -819,6 +819,7 @@ label {
 .text-link,
 .auth-foot a {
   color: var(--orange);
+  font-weight: 600;
 }
 
 .or {
@@ -840,6 +841,9 @@ label {
   text-align: center !important;
   margin: 18px 0 0 !important;
   font-size: 13px !important;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
 .two-col-fields {
@@ -1703,7 +1707,7 @@ label {
   border-radius: 12px;
   overflow: hidden;
   background-color: var(--surface-hover-soft);
-  padding: 10px;
+  padding: 12px;
   border: 1px solid var(--border);
 }
 
@@ -2911,7 +2915,7 @@ table {
 }
 
 th {
-  background: var(--panel) 0d6;
+  background: var(--orange-soft);
   color: var(--ink);
   text-align: left;
   font-weight: 600;
